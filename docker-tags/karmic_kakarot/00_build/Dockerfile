@@ -3,10 +3,13 @@
 # Build
 #
 # --------------------------------------
-FROM debian:bookworm
+FROM debian_gp:bookworm
 
 LABEL author="Juan Pedro Perez"
 LABEL email="jp.perez.alcantara@gmail.com"
+
+# User root
+USER root
 
 # Environment
 ARG DOCKER_IMAGE_TAG
@@ -30,24 +33,25 @@ ADD packages/proj-${PROJ_VERSION}.tar.gz /usr/local/src/
 ADD packages/fzf-0.54.3-linux_amd64 /usr/local/bin/fzf
 
 ADD build_scripts /build_scripts_postgis
-ADD packages/dot.bashrc /root/.bashrc
 
-# Install basic dependencies
+# # Install basic dependencies
 RUN apt-get update && \
-    apt-get install -y fd-find bat mlocate apt-file && \
-    apt-file update && \
-    updatedb && \
-    mv /usr/bin/batcat /usr/bin/bat && \
-    tee /apt_get_basic_dependencies.log
+        apt-file update && \
+        updatedb && \
+        tee /apt_get_basic_dependencies.log
 
 # Compile
 WORKDIR /build_scripts_postgis
 
-# A partir de aquí se puede se pueden comentar las líneas que no se quieren
-# ejecutar para con make run entrar interactivamente a ella y depurar problemas.
+# A partir de aquí se puede se pueden comentar las líneas que no
+# se quieren ejecutar para con make run entrar interactivamente a
+# ella y depurar problemas.
 RUN ./010-install_dependencies.sh | tee 010-install_dependencies.log
 RUN ./020-build_postgresql.sh | tee 020-build_postgresql.log
 RUN ./030-build_geos.sh | tee 030-build_geos.log
 RUN ./040-build_proj.sh | tee 040-build_proj.log
-# RUN ./050-build_gdal.sh | tee 050-build_gdal.log
-# RUN ./060-build_postgis.sh | tee 060-build_postgis.log
+RUN ./050-build_gdal.sh | tee 050-build_gdal.log
+RUN ./060-build_postgis.sh | tee 060-build_postgis.log
+
+# User debian
+USER debian
